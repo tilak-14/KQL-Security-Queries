@@ -1,0 +1,50 @@
+// ============================================
+// QUERY: Unified Attack Timeline Builder
+// MITRE: Multiple Tactics
+// DESCRIPTION: Build a chronological timeline of all attacker activity
+//              across Identity, Endpoint, Cloud, and Data tables
+// SEVERITY: Investigation Tool
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// let TargetUser = "attacker@domain.com";
+// let LoginEvents = SigninLogs
+// | where UserPrincipalName == TargetUser
+// | project Timestamp=TimeGenerated, Stage="1-Initial Access",
+//     Detail=strcat("Login from ", IPAddress, " Result:", ResultType);
+// let WindowsEvents = SecurityEvent
+// | where Account contains TargetUser
+// | project Timestamp=TimeGenerated, Stage="2-Lateral Movement",
+//     Detail=strcat("EventID:", tostring(EventID), " on ", Computer);
+// let CloudEvents = AzureActivity
+// | where Caller == TargetUser
+// | project Timestamp=TimeGenerated, Stage="3-Cloud Action",
+//     Detail=OperationNameValue;
+// let DataEvents = OfficeActivity
+// | where UserId == TargetUser
+// | project Timestamp=TimeGenerated, Stage="4-Data Exfil",
+//     Detail=strcat(Operation, " on ", OfficeObjectId);
+// LoginEvents | union WindowsEvents | union CloudEvents | union DataEvents
+// | sort by Timestamp asc
+
+// === PRACTICE VERSION ===
+let TargetSource = toscalar(
+    StormEvents
+    | summarize Events = count() by Source
+    | top 1 by Events desc
+    | project Source);
+let Phase1 = StormEvents
+| where Source == TargetSource and DeathsDirect > 0
+| project Timestamp=StartTime, Stage="1-Initial Strike",
+    Detail=strcat(EventType, " Deaths:", tostring(DeathsDirect));
+let Phase2 = StormEvents
+| where Source == TargetSource and InjuriesDirect > 5
+| project Timestamp=StartTime, Stage="2-Escalation",
+    Detail=strcat(EventType, " Injuries:", tostring(InjuriesDirect));
+let Phase3 = StormEvents
+| where Source == TargetSource and DamageProperty > 1000000
+| project Timestamp=StartTime, Stage="3-Mass Impact",
+    Detail=strcat(EventType, " Damage:", tostring(DamageProperty));
+Phase1 | union Phase2 | union Phase3
+| sort by Timestamp asc
+| take 20

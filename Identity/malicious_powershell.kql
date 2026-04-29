@@ -1,0 +1,29 @@
+// ============================================
+// QUERY: Malicious PowerShell Execution
+// MITRE: T1059.001 - PowerShell
+// DESCRIPTION: PowerShell with download or execution keywords
+// SEVERITY: High
+// TUNE: Add more keywords from threat intel feeds
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// DeviceProcessEvents
+// | where TimeGenerated > ago(1d)
+// | where FileName == "powershell.exe"
+// | where ProcessCommandLine has_any (
+//     "IEX", "Invoke-Expression", "DownloadString",
+//     "WebClient", "-EncodedCommand", "-enc", "Invoke-WebRequest")
+// | project TimeGenerated, DeviceName, AccountName,
+//     ProcessCommandLine, InitiatingProcessFileName
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where EventType has_any ("Tornado", "Hurricane", "Waterspout", "Dust Devil")
+| summarize Occurrences = count(), AffectedStates = make_set(State),
+    TotalDeaths = sum(DeathsDirect)
+    by EventType, Source
+| extend SuspicionScore = iff(Occurrences > 5, "High",
+    iff(Occurrences > 2, "Medium", "Low"))
+| where SuspicionScore != "Low"
+| sort by Occurrences desc

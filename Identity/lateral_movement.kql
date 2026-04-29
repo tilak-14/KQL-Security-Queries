@@ -1,0 +1,25 @@
+// ============================================
+// QUERY: Lateral Movement Detection
+// MITRE: T1021 - Remote Services
+// DESCRIPTION: One account doing network logins to many machines
+// SEVERITY: Critical
+// TUNE: MachinesAccessed > 3 threshold
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SecurityEvent
+// | where TimeGenerated > ago(1d)
+// | where EventID == 4624
+// | where LogonType == 3
+// | summarize MachinesAccessed = dcount(Computer), ComputerList = make_set(Computer)
+//     by Account, IpAddress
+// | where MachinesAccessed > 3
+// | sort by MachinesAccessed desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where InjuriesDirect > 0
+| summarize StatesHit = dcount(State), StateList = make_set(State)
+    by EventType, Source
+| where StatesHit > 3
+| sort by StatesHit desc

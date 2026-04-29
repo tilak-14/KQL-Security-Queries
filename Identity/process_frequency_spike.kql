@@ -1,0 +1,34 @@
+// ============================================
+// QUERY: Process Frequency Anomaly (Spike Detection)
+// MITRE: T1059 - Command and Scripting Interpreter
+// DESCRIPTION: Process running 3x more than its historical baseline
+// SEVERITY: High
+// TUNE: Ratio > 3 means 3x baseline - adjust as needed
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// let Baseline = DeviceProcessEvents
+// | where TimeGenerated between (ago(7d) .. ago(1d))
+// | summarize BaselineCount = count() by FileName, DeviceName;
+// let Recent = DeviceProcessEvents
+// | where TimeGenerated > ago(1d)
+// | summarize RecentCount = count() by FileName, DeviceName;
+// Recent
+// | join kind=inner Baseline on FileName, DeviceName
+// | extend Ratio = round(todouble(RecentCount) / BaselineCount, 2)
+// | where Ratio > 3
+// | sort by Ratio desc
+
+// === PRACTICE VERSION ===
+let Baseline = StormEvents
+| where StartTime < ago(365d)
+| summarize BaselineCount = count() by EventType, State;
+let Recent = StormEvents
+| where StartTime > ago(365d)
+| summarize RecentCount = count() by EventType, State;
+Recent
+| join kind=inner Baseline on EventType, State
+| extend SpikeRatio = round(todouble(RecentCount) / BaselineCount, 2)
+| where SpikeRatio > 1.5
+| sort by SpikeRatio desc
+| take 15

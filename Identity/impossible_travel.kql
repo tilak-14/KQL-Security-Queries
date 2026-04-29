@@ -1,0 +1,24 @@
+// ============================================
+// QUERY: Impossible Travel Detection
+// MITRE: T1078 - Valid Accounts
+// DESCRIPTION: User logging in from 2+ countries within 1 hour
+// SEVERITY: Critical
+// TUNE: Time window can be adjusted
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SigninLogs
+// | where TimeGenerated > ago(1d)
+// | where ResultType == "0"
+// | summarize Countries = dcount(Location), CountryList = make_set(Location),
+//     IPList = make_set(IPAddress)
+//     by UserPrincipalName
+// | where Countries > 1
+// | sort by Countries desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize Locations = dcount(State), LocationList = make_set(State)
+    by Source
+| where Locations > 6
+| sort by Locations desc

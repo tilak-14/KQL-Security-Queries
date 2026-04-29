@@ -1,0 +1,35 @@
+// ============================================
+// QUERY: First Time New Country Login Alert
+// MITRE: T1078 - Valid Accounts
+// DESCRIPTION: User logging in from a country not seen in past 30 days
+// SEVERITY: High
+// TUNE: Historical window (30d) can be extended
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// let KnownLocations = SigninLogs
+// | where TimeGenerated between (ago(30d) .. ago(1d))
+// | where ResultType == "0"
+// | summarize KnownCountries = make_set(Location) by UserPrincipalName;
+// let RecentLogins = SigninLogs
+// | where TimeGenerated > ago(1d)
+// | where ResultType == "0"
+// | project UserPrincipalName, Location, IPAddress, TimeGenerated;
+// RecentLogins
+// | join kind=inner KnownLocations on UserPrincipalName
+// | where not(Location in (KnownCountries))
+// | project TimeGenerated, UserPrincipalName, NewLocation=Location, KnownCountries
+
+// === PRACTICE VERSION ===
+let HistoricTypes = StormEvents
+| where StartTime < ago(365d)
+| summarize KnownTypes = make_set(EventType) by State;
+let RecentTypes = StormEvents
+| where StartTime > ago(365d)
+| project State, EventType, StartTime;
+RecentTypes
+| join kind=inner HistoricTypes on State
+| where not(EventType in (KnownTypes))
+| project State, NewEventType=EventType, StartTime
+| sort by StartTime desc
+| take 15

@@ -1,0 +1,30 @@
+// ============================================
+// QUERY: After Hours Azure Admin Activity
+// MITRE: T1078.004 - Cloud Accounts
+// DESCRIPTION: Admin Azure operations outside 8am-6pm
+// SEVERITY: Medium
+// TUNE: Adjust hour range for your org timezone
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(7d)
+// | where ActivityStatusValue == "Success"
+// | where CategoryValue == "Administrative"
+// | extend HourOfDay = datetime_part("hour", TimeGenerated)
+// | where HourOfDay !between (8 .. 18)
+// | summarize AfterHoursOps = count(), Operations = make_set(OperationNameValue)
+//     by Caller, HourOfDay
+// | sort by AfterHoursOps desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| extend Month = datetime_part("month", StartTime)
+| extend Season = iff(Month in (12, 1, 2), "Winter",
+    iff(Month in (3, 4, 5), "Spring",
+    iff(Month in (6, 7, 8), "Summer", "Fall")))
+| where Season in ("Winter", "Fall")
+| summarize OffSeasonOps = count(), EventTypes = make_set(EventType)
+    by State, Season
+| sort by OffSeasonOps desc
+| take 15

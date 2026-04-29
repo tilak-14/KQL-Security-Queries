@@ -1,0 +1,25 @@
+// ============================================
+// QUERY: Privilege Escalation - Group Addition
+// MITRE: T1078.002 - Domain Accounts
+// DESCRIPTION: User added to admin or security group
+// SEVERITY: Critical
+// EventIDs: 4728 (global group), 4732 (local group), 4756 (universal group)
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SecurityEvent
+// | where TimeGenerated > ago(1d)
+// | where EventID in (4728, 4732, 4756)
+// | project TimeGenerated, AddedBy=SubjectUserName,
+//     AddedUser=TargetUserName, Computer, Activity
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect > 5
+| extend AddedBy = Source
+| extend AddedUser = EventType
+| project StartTime, AddedBy, AddedUser, State,
+    Severity = iff(DeathsDirect > 10, "Critical Admin Add", "High Admin Add")
+| sort by StartTime desc
+| take 15

@@ -1,0 +1,25 @@
+// ============================================
+// QUERY: After Hours Login Detection
+// MITRE: T1078 - Valid Accounts
+// DESCRIPTION: Successful logins outside 8am-6pm business hours
+// SEVERITY: Medium
+// TUNE: Adjust hour range for your timezone
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SigninLogs
+// | where TimeGenerated > ago(7d)
+// | where ResultType == "0"
+// | extend HourOfDay = datetime_part("hour", TimeGenerated)
+// | where HourOfDay !between (8 .. 18)
+// | summarize AfterHoursLogins = count() by UserPrincipalName, HourOfDay
+// | sort by AfterHoursLogins desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| extend Month = datetime_part("month", StartTime)
+| where Month !between (3 .. 9)
+| summarize OffSeasonEvents = count(), EventTypes = make_set(EventType)
+    by State, Month
+| sort by OffSeasonEvents desc
+| take 15

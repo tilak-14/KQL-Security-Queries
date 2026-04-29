@@ -1,0 +1,39 @@
+// ============================================
+// QUERY: Full Insider Threat Dashboard
+// MITRE: T1048, T1114, T1070
+// DESCRIPTION: Per-user weighted score across all O365 threat signals
+// SEVERITY: Dashboard
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// OfficeActivity
+// | where TimeGenerated > ago(7d)
+// | summarize TotalActions = count(),
+//     ForwardingRules = countif(Operation == "New-InboxRule"),
+//     MassDownloads = countif(Operation == "FileDownloaded"),
+//     ExternalShares = countif(Operation == "SharingInvitationCreated"),
+//     BulkDeletions = countif(Operation in ("HardDelete","SoftDelete")),
+//     UniqueIPs = dcount(ClientIP)
+//     by UserId
+// | extend ThreatScore = (ForwardingRules * 20) + (MassDownloads * 2)
+//     + (ExternalShares * 10) + (BulkDeletions * 5) + (UniqueIPs * 3)
+// | extend RiskLevel = iff(ThreatScore > 100, "Critical",
+//     iff(ThreatScore > 40, "High", "Normal"))
+// | where RiskLevel != "Normal"
+// | sort by ThreatScore desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize TotalActions = count(),
+    ForwardingRisk = countif(EventType == "Tornado"),
+    MassDownload = countif(DamageProperty > 1000000),
+    ExternalShare = countif(InjuriesDirect > 10),
+    BulkDeletion = countif(DeathsDirect > 5),
+    UniqueStates = dcount(State)
+    by Source
+| extend ThreatScore = (ForwardingRisk * 20) + (MassDownload * 2)
+    + (ExternalShare * 10) + (BulkDeletion * 5) + (UniqueStates * 3)
+| extend RiskLevel = iff(ThreatScore > 50, "Critical",
+    iff(ThreatScore > 20, "High", "Normal"))
+| where RiskLevel != "Normal"
+| sort by ThreatScore desc

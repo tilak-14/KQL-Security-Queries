@@ -1,0 +1,27 @@
+// ============================================
+// QUERY: Silent Email Forwarding Rule Created
+// MITRE: T1114.003 - Email Forwarding Rule
+// DESCRIPTION: Inbox rule created to forward emails externally
+// SEVERITY: Critical - Silent ongoing exfiltration
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// OfficeActivity
+// | where TimeGenerated > ago(7d)
+// | where Operation == "New-InboxRule"
+// | extend RuleParams = tostring(Parameters)
+// | where RuleParams has_any ("ForwardTo", "ForwardAsAttachmentTo", "RedirectTo")
+// | project TimeGenerated, UserId, ClientIP, RuleParams
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize RecurringHits = count(), FirstSeen = min(StartTime),
+    LastSeen = max(StartTime), AffectedStates = make_set(State)
+    by Source, EventType
+| where RecurringHits > 8
+| extend ActiveDays = datetime_diff("day", LastSeen, FirstSeen)
+| extend ForwardingRisk = iff(ActiveDays > 200,
+    "Long-term Forwarding Rule Detected", "Short-term Rule")
+| sort by ActiveDays desc
+| take 15

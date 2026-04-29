@@ -1,0 +1,29 @@
+// ============================================
+// QUERY: File Shared with External Users
+// MITRE: T1048 - Exfiltration Over Alternative Protocol
+// DESCRIPTION: SharePoint files shared outside the organization
+// SEVERITY: High
+// TUNE: Replace @yourcompany.com with your real domain
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// OfficeActivity
+// | where TimeGenerated > ago(7d)
+// | where Operation == "SharingInvitationCreated"
+// | extend SharedWith = tostring(parse_json(Parameters)[0].Value)
+// | where SharedWith !contains "@yourcompany.com"
+// | summarize ExternalShares = count(), SharedFiles = make_set(OfficeObjectId),
+//     ExternalRecipients = make_set(SharedWith)
+//     by UserId
+// | where ExternalShares > 3
+// | sort by ExternalShares desc
+
+// === PRACTICE VERSION ===
+let InternalStates = dynamic(["TEXAS", "FLORIDA", "CALIFORNIA", "NEW YORK", "OHIO"]);
+StormEvents
+| where State !in (InternalStates)
+| summarize ExternalHits = count(), ExternalStates = make_set(State)
+    by Source, EventType
+| where ExternalHits > 5
+| sort by ExternalHits desc
+| take 15

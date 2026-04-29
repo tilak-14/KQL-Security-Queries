@@ -1,0 +1,29 @@
+// ============================================
+// QUERY: Ransomware - Shadow Copy Deletion
+// MITRE: T1490 - Inhibit System Recovery
+// DESCRIPTION: vssadmin or wbadmin commands to delete backups
+// SEVERITY: Critical - Immediate response required
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// DeviceProcessEvents
+// | where TimeGenerated > ago(1d)
+// | where ProcessCommandLine has_any (
+//     "vssadmin delete shadows",
+//     "wbadmin delete",
+//     "bcdedit /set recoveryenabled no",
+//     "wmic shadowcopy delete")
+// | project TimeGenerated, DeviceName, AccountName, ProcessCommandLine
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect > 0 and DamageProperty > 1000000 and InjuriesDirect > 0
+| summarize MassDestructionEvents = count(),
+    TotalDeaths = sum(DeathsDirect),
+    TotalDamage = sum(DamageProperty)
+    by State
+| extend RansomwareRisk = iff(MassDestructionEvents > 5,
+    "CRITICAL - Ransomware Pattern", "High")
+| sort by MassDestructionEvents desc
+| take 10

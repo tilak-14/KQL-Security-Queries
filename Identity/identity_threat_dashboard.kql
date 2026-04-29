@@ -1,0 +1,38 @@
+// ============================================
+// QUERY: Identity Threat Dashboard
+// MITRE: Multiple - T1110, T1078
+// DESCRIPTION: Per-user summary of all login risk indicators
+// SEVERITY: Dashboard
+// TUNE: Adjust ThreatLevel thresholds
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SigninLogs
+// | where TimeGenerated > ago(1d)
+// | summarize TotalLogins = count(),
+//     FailedLogins = countif(ResultType != "0"),
+//     SuccessLogins = countif(ResultType == "0"),
+//     UniqueIPs = dcount(IPAddress),
+//     UniqueCountries = dcount(Location)
+//     by UserPrincipalName
+// | extend FailRate = round(todouble(FailedLogins) / TotalLogins * 100, 1)
+// | extend ThreatLevel = iff(FailRate > 80, "Critical",
+//     iff(FailRate > 50, "High",
+//     iff(UniqueCountries > 2, "Suspicious", "Normal")))
+// | where ThreatLevel != "Normal"
+// | sort by FailRate desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize TotalEvents = count(),
+    DeadlyEvents = countif(DeathsDirect > 0),
+    SafeEvents = countif(DeathsDirect == 0),
+    UniqueTypes = dcount(EventType),
+    MaxDeaths = max(DeathsDirect)
+    by State
+| extend DeathRate = round(todouble(DeadlyEvents) / TotalEvents * 100, 1)
+| extend ThreatLevel = iff(DeathRate > 50, "Critical",
+    iff(DeathRate > 20, "High",
+    iff(UniqueTypes > 10, "Suspicious", "Normal")))
+| where ThreatLevel != "Normal"
+| sort by DeathRate desc

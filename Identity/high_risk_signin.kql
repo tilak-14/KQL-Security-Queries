@@ -1,0 +1,26 @@
+// ============================================
+// QUERY: High Risk Sign-In Detection
+// MITRE: T1078 - Valid Accounts
+// DESCRIPTION: Microsoft flagged this login as high or medium risk
+// SEVERITY: Critical
+// TUNE: Remove medium risk to reduce noise
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SigninLogs
+// | where TimeGenerated > ago(1d)
+// | where RiskLevelDuringSignIn in ("high", "medium")
+// | where ResultType == "0"
+// | project TimeGenerated, UserPrincipalName, IPAddress, Location,
+//     RiskLevel=RiskLevelDuringSignIn, AppDisplayName
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect > 3 or InjuriesDirect > 10
+| extend RiskLevel = iff(DeathsDirect > 10, "High", 
+    iff(DeathsDirect > 3, "Medium", "Low"))
+| where RiskLevel in ("High", "Medium")
+| project StartTime, State, EventType, DeathsDirect, InjuriesDirect, RiskLevel
+| sort by DeathsDirect desc
+| take 20

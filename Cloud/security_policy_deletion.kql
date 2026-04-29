@@ -1,0 +1,24 @@
+// ============================================
+// QUERY: Security Policy or Defender Settings Deleted
+// MITRE: T1562.001 - Disable or Modify Tools
+// DESCRIPTION: Azure Policy or Defender for Cloud settings removed
+// SEVERITY: Critical - attacker disabling defenses before attack
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(7d)
+// | where OperationNameValue has_any (
+//     "policyassignments/delete", "securitycontacts/delete",
+//     "autoprovisioningsettings/write", "pricings/write")
+// | where ActivityStatusValue == "Success"
+// | project TimeGenerated, DisabledBy=Caller, Operation=OperationNameValue, ResourceGroup
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize EventCount = count(), TotalDeaths = sum(DeathsDirect)
+    by EventType
+| where EventCount < 10 and TotalDeaths > 5
+| extend RiskRating = "Critical - Rare but Deadly - Policy Delete Pattern"
+| sort by TotalDeaths desc

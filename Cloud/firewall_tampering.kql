@@ -1,0 +1,26 @@
+// ============================================
+// QUERY: NSG / Firewall Rule Modification
+// MITRE: T1562.007 - Disable or Modify Cloud Firewall
+// DESCRIPTION: Network security group rules were changed
+// SEVERITY: High
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(1d)
+// | where OperationNameValue contains "networksecuritygroups"
+// | where ActivityStatusValue == "Success"
+// | project TimeGenerated, ModifiedBy=Caller, ResourceGroup,
+//     Operation=OperationNameValue
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+let HighImpactTypes = StormEvents
+| where DamageProperty > 2000000
+| summarize by EventType;
+StormEvents
+| join kind=inner HighImpactTypes on EventType
+| summarize TamperingEvents = count(), AffectedStates = dcount(State)
+    by EventType, Source
+| sort by TamperingEvents desc
+| take 15

@@ -1,0 +1,38 @@
+// ============================================
+// QUERY: Full Cloud Infrastructure Threat Dashboard
+// MITRE: Multiple
+// DESCRIPTION: Per-user weighted threat score across all cloud actions
+// SEVERITY: Dashboard
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(1d)
+// | where ActivityStatusValue == "Success"
+// | summarize TotalOps = count(),
+//     Deletions = countif(OperationNameValue contains "delete"),
+//     RoleChanges = countif(OperationNameValue contains "roleassignment"),
+//     NetworkChanges = countif(OperationNameValue contains "networksecurity"),
+//     VMCreations = countif(OperationNameValue contains "virtualmachine")
+//     by Caller
+// | extend ThreatScore = (Deletions * 10) + (RoleChanges * 15)
+//     + (NetworkChanges * 8) + (VMCreations * 5)
+// | extend RiskLevel = iff(ThreatScore > 50, "Critical",
+//     iff(ThreatScore > 20, "High", "Normal"))
+// | where RiskLevel != "Normal"
+// | sort by ThreatScore desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize TotalEvents = count(),
+    Deletions = countif(DeathsDirect > 5),
+    RoleChanges = countif(InjuriesDirect > 10),
+    NetworkChanges = countif(DamageProperty > 1000000),
+    VMCreations = countif(DamageCrops > 500000)
+    by Source
+| extend ThreatScore = (Deletions * 10) + (RoleChanges * 15)
+    + (NetworkChanges * 8) + (VMCreations * 5)
+| extend RiskLevel = iff(ThreatScore > 20, "Critical",
+    iff(ThreatScore > 10, "High", "Normal"))
+| where RiskLevel != "Normal"
+| sort by ThreatScore desc

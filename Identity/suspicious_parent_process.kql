@@ -1,0 +1,31 @@
+// ============================================
+// QUERY: LOLBin - Suspicious Parent Process
+// MITRE: T1218 - System Binary Proxy Execution
+// DESCRIPTION: PowerShell launched by an unusual parent like cmd or mshta
+// SEVERITY: High
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// DeviceProcessEvents
+// | where TimeGenerated > ago(1d)
+// | where FileName == "powershell.exe"
+// | where InitiatingProcessFileName in (
+//     "cmd.exe", "mshta.exe", "wscript.exe",
+//     "cscript.exe", "rundll32.exe", "regsvr32.exe")
+// | project TimeGenerated, DeviceName, AccountName,
+//     ParentProcess=InitiatingProcessFileName,
+//     ChildProcess=FileName, ProcessCommandLine
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+let UnusualSources = StormEvents
+| summarize EventTypes = dcount(EventType) by Source
+| where EventTypes > 5
+| project Source;
+StormEvents
+| join kind=inner UnusualSources on Source
+| where DeathsDirect > 0
+| project StartTime, State, ParentSource=Source,
+    ChildEvent=EventType, DeathsDirect
+| sort by DeathsDirect desc
+| take 20

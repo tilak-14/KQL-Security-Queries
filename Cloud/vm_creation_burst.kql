@@ -1,0 +1,24 @@
+// ============================================
+// QUERY: VM Creation Burst - Cryptomining Detection
+// MITRE: T1496 - Resource Hijacking
+// DESCRIPTION: More than 3 VMs created in 1 hour by same user
+// SEVERITY: Critical
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(1d)
+// | where OperationNameValue contains "virtualmachines/write"
+// | where ActivityStatusValue == "Success"
+// | summarize VMsCreated = count(), ResourceGroups = make_set(ResourceGroup)
+//     by Caller, bin(TimeGenerated, 1h)
+// | where VMsCreated > 3
+// | sort by VMsCreated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| summarize CreationBurst = count(), AffectedStates = make_set(State)
+    by Source, bin(StartTime, 30d)
+| where CreationBurst > 10
+| sort by CreationBurst desc
+| take 15

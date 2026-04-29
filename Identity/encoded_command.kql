@@ -1,0 +1,26 @@
+// ============================================
+// QUERY: Base64 Encoded Command Detection
+// MITRE: T1027 - Obfuscated Files or Information
+// DESCRIPTION: PowerShell using -enc flag or long encoded strings
+// SEVERITY: Critical
+// TUNE: CommandLength threshold - 100 is safe minimum
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// DeviceProcessEvents
+// | where TimeGenerated > ago(1d)
+// | where ProcessCommandLine has_any ("-enc", "-EncodedCommand", "-e ", "JAB")
+// | extend CommandLength = strlen(ProcessCommandLine)
+// | where CommandLength > 100
+// | project TimeGenerated, DeviceName, AccountName, CommandLength, ProcessCommandLine
+// | sort by CommandLength desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| extend DescriptionLength = strlen(EventNarrative)
+| where DescriptionLength > 500
+| summarize LongNarratives = count(), AvgLength = avg(DescriptionLength),
+    MaxLength = max(DescriptionLength)
+    by EventType
+| sort by MaxLength desc
+| take 15

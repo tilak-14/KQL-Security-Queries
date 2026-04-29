@@ -1,0 +1,25 @@
+// ============================================
+// QUERY: MFA Bypass Detection
+// MITRE: T1556 - Modify Authentication Process
+// DESCRIPTION: Successful login without MFA being required
+// SEVERITY: High
+// TUNE: Filter specific apps that legitimately skip MFA
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SigninLogs
+// | where TimeGenerated > ago(1d)
+// | where ResultType == "0"
+// | where AuthenticationRequirement == "singleFactorAuthentication"
+// | summarize count() by UserPrincipalName, AppDisplayName, IPAddress
+// | sort by count_ desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect == 0 and InjuriesDirect == 0
+| where DamageProperty > 1000000
+| summarize SilentDamage = count(), TotalDamage = sum(DamageProperty)
+    by EventType, State
+| extend MFABypassRisk = "High - Damage with no casualties detected"
+| sort by TotalDamage desc
+| take 15

@@ -1,0 +1,24 @@
+// ============================================
+// QUERY: Bulk Email Deletion - Covering Tracks
+// MITRE: T1070 - Indicator Removal
+// DESCRIPTION: User deleting 20+ emails rapidly - covering tracks after attack
+// SEVERITY: High
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// OfficeActivity
+// | where TimeGenerated > ago(1d)
+// | where Operation in ("HardDelete", "SoftDelete", "MoveToDeletedItems")
+// | summarize DeletionCount = count(), TimeWindow = make_set(bin(TimeGenerated, 1h))
+//     by UserId, ClientIP
+// | where DeletionCount > 20
+// | sort by DeletionCount desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect > 0 and DamageProperty > 0
+| summarize DeletionCount = count(), TimeWindows = make_set(bin(StartTime, 30d))
+    by Source
+| where DeletionCount > 5
+| sort by DeletionCount desc
+| take 15

@@ -1,0 +1,47 @@
+// ============================================
+// QUERY: Full Attack Chain - Brute Force to Lateral Movement
+// MITRE: T1110 > T1078 > T1021
+// DESCRIPTION: Accounts that were brute forced, then logged in, then spread
+// SEVERITY: Critical - Active Attack in Progress
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// let BruteForced = SigninLogs
+// | where TimeGenerated > ago(1d)
+// | where ResultType != "0"
+// | summarize FailCount = count() by UserPrincipalName
+// | where FailCount > 20
+// | project UserPrincipalName;
+// let Compromised = SigninLogs
+// | where TimeGenerated > ago(1d)
+// | where ResultType == "0"
+// | project UserPrincipalName, SuccessTime=TimeGenerated, IPAddress;
+// let LateralMovement = SecurityEvent
+// | where TimeGenerated > ago(1d)
+// | where EventID == 4624 and LogonType == 3
+// | summarize MachinesHit = dcount(Computer), ComputerList = make_set(Computer)
+//     by Account;
+// BruteForced
+// | join kind=inner Compromised on UserPrincipalName
+// | join kind=inner LateralMovement on $left.UserPrincipalName == $right.Account
+// | project UserPrincipalName, SuccessTime, IPAddress, MachinesHit, ComputerList
+// | sort by MachinesHit desc
+
+// === PRACTICE VERSION ===
+let HighFrequency = StormEvents
+| summarize HitCount = count() by Source
+| where HitCount > 10
+| project Source;
+let CausedDamage = StormEvents
+| where DamageProperty > 1000000
+| summarize TotalDamage = sum(DamageProperty) by Source
+| project Source, TotalDamage;
+let SpreadWide = StormEvents
+| summarize StatesHit = dcount(State), StateList = make_set(State) by Source
+| where StatesHit > 3
+| project Source, StatesHit, StateList;
+HighFrequency
+| join kind=inner CausedDamage on Source
+| join kind=inner SpreadWide on Source
+| project Source, TotalDamage, StatesHit, StateList
+| sort by StatesHit desc

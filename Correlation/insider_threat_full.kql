@@ -1,0 +1,50 @@
+// ============================================
+// QUERY: Insider Threat - Mass Download + Forwarding + New Country
+// MITRE: T1048, T1114, T1078
+// DESCRIPTION: User who downloaded files, set up forwarding, AND logged in from new country
+// SEVERITY: Critical
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// let MassDownloaders = OfficeActivity
+// | where TimeGenerated > ago(7d)
+// | where Operation == "FileDownloaded"
+// | summarize Downloads = count() by UserId
+// | where Downloads > 50
+// | project UserId;
+// let ForwardingRules = OfficeActivity
+// | where TimeGenerated > ago(7d)
+// | where Operation == "New-InboxRule"
+// | project UserId, RuleTime=TimeGenerated;
+// let NewCountry = SigninLogs
+// | where TimeGenerated > ago(7d)
+// | where ResultType == "0"
+// | summarize Countries = dcount(Location), CountryList = make_set(Location)
+//     by UserPrincipalName
+// | where Countries > 1
+// | project UserPrincipalName, CountryList;
+// MassDownloaders
+// | join kind=inner ForwardingRules on UserId
+// | join kind=inner NewCountry on $left.UserId == $right.UserPrincipalName
+// | project UserId, RuleTime, CountryList
+// | sort by RuleTime desc
+
+// === PRACTICE VERSION ===
+let MassActivity = StormEvents
+| summarize Events = count() by Source
+| where Events > 15
+| project Source;
+let LongTermPresence = StormEvents
+| summarize FirstSeen = min(StartTime), LastSeen = max(StartTime) by Source
+| extend ActiveDays = datetime_diff("day", LastSeen, FirstSeen)
+| where ActiveDays > 300
+| project Source, ActiveDays;
+let NewLocations = StormEvents
+| summarize UniqueStates = dcount(State), StateList = make_set(State) by Source
+| where UniqueStates > 4
+| project Source, UniqueStates, StateList;
+MassActivity
+| join kind=inner LongTermPresence on Source
+| join kind=inner NewLocations on Source
+| project Source, ActiveDays, UniqueStates, StateList
+| sort by UniqueStates desc

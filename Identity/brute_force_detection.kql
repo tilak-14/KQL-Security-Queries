@@ -1,0 +1,24 @@
+// ============================================
+// QUERY: Brute Force Detection
+// MITRE: T1110 - Brute Force
+// DESCRIPTION: Accounts with 20+ failed logins in 1 hour
+// SEVERITY: High
+// TUNE: Change FailCount threshold for your environment
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// SigninLogs
+// | where TimeGenerated > ago(1h)
+// | where ResultType != "0"
+// | summarize FailCount = count(), IPList = make_set(IPAddress)
+//     by UserPrincipalName
+// | where FailCount > 20
+// | sort by FailCount desc
+
+// === PRACTICE VERSION (StormEvents) ===
+StormEvents
+| where DeathsDirect > 0
+| summarize FailCount = count(), AffectedAreas = make_set(State)
+    by Source
+| where FailCount > 10
+| sort by FailCount desc

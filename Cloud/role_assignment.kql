@@ -1,0 +1,22 @@
+// ============================================
+// QUERY: Azure Role Assignment Detection
+// MITRE: T1078.004 - Cloud Accounts
+// DESCRIPTION: Someone assigned a role in Azure - could be privilege escalation
+// SEVERITY: Critical
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(1d)
+// | where OperationNameValue == "microsoft.authorization/roleassignments/write"
+// | where ActivityStatusValue == "Success"
+// | project TimeGenerated, AssignedBy=Caller, ResourceGroup, Properties
+// | sort by TimeGenerated desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect > 10
+| project StartTime, AttackSource=Source, TargetState=State, EventType,
+    Severity=iff(DeathsDirect > 20, "Owner Role Assigned", "Contributor Role Assigned")
+| sort by StartTime desc
+| take 15

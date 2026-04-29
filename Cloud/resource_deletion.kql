@@ -1,0 +1,24 @@
+// ============================================
+// QUERY: Azure Resource Deletion - Sabotage Detection
+// MITRE: T1485 - Data Destruction
+// DESCRIPTION: User deleting more than 3 Azure resources
+// SEVERITY: Critical
+// ============================================
+
+// === REAL SENTINEL VERSION ===
+// AzureActivity
+// | where TimeGenerated > ago(1d)
+// | where OperationNameValue contains "delete"
+// | where ActivityStatusValue == "Success"
+// | summarize DeletionCount = count(), DeletedResources = make_set(Resource)
+//     by Caller, ResourceGroup
+// | where DeletionCount > 3
+// | sort by DeletionCount desc
+
+// === PRACTICE VERSION ===
+StormEvents
+| where DeathsDirect > 0 and DamageProperty > 0
+| summarize DestructionCount = count(), AffectedAreas = make_set(State)
+    by EventType, Source
+| where DestructionCount > 3
+| sort by DestructionCount desc
