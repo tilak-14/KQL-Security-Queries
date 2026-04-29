@@ -43,3 +43,39 @@ All queries include two versions:
 ## About
 Built as part of Cloud Security Engineer career development.
 Covers: SigninLogs, SecurityEvent, DeviceProcessEvents, AzureActivity, OfficeActivity
+
+## For Correlation query below are the diagrams
+
+1. Full_attack_chain
+┌──────────────┐      ┌──────────────┐      ┌──────────────────┐
+│  BruteForced │ ──▶  │  Compromised │ ──▶  │  LateralMovement │
+│ (Failed 20+) │      │ (Success ✅) │      │ (Jumped machines)│
+└──────────────┘      └──────────────┘      └──────────────────┘
+         └──────────── JOIN ──────────── JOIN ─────────┘
+
+
+
+2. Insider_Threat
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  MassDownloaders │ ──▶ │  ForwardingRules │ ──▶ │    NewCountry    │
+│ (Downloaded 50+) │     │ (Created rule 📧)│     │ (2+ countries 🌍)│
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+          └──────────── JOIN ──────────── JOIN ─────────┘
+
+
+3. Unified_Attack_Timeline
+┌────────────────┐
+│  SigninLogs     │ ──▶ Stage 1: Initial Access (Login)
+└────────────────┘
+┌────────────────┐
+│  SecurityEvent  │ ──▶ Stage 2: Lateral Movement (Jumped machines)
+└────────────────┘
+┌────────────────┐
+│  AzureActivity  │ ──▶ Stage 3: Cloud Actions (Azure changes)
+└────────────────┘
+┌────────────────┐
+│  OfficeActivity  │ ──▶ Stage 4: Data Exfiltration (File theft)
+└────────────────┘
+         │
+         ▼
+   UNION ALL INTO ONE TIMELINE ──▶ Sort by Time ⏱️
